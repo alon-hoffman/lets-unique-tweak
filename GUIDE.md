@@ -21,8 +21,13 @@ made. `tweak.set`, `tweak.revert`, `tweak.revertAll`, `tweak.undo`,
 
 ## Open
 
-`/lets tweak <scope>`: call `open {unique:"tweak"}`, show the window in the
-browser pane. The project is the folder you are working in (the git root);
+`/lets tweak <scope>`, or any request like "tweak X" / "open tweak": call
+`open {unique:"tweak"}` **and then show the window yourself, in the same turn,
+without waiting to be asked**: `mcp__Claude_Browser__preview_start {url}` (or
+`navigate` if a pane is already open) using the `url` from the `open` result.
+A window nobody can see is a failed open. If there is no browser tool, call
+`open` again with `launch:"system"` and the same `windowId`. Never paste the
+URL as the answer. The project is the folder you are working in (the git root);
 ask one short question only if that is unclear. If the human gave a scope,
 start discovery now; otherwise say "What should we tweak?" via `entity.say`.
 
@@ -98,12 +103,33 @@ the human in chat, briefly:
   they need to refresh or restart. Say what you actually know of this project;
   do not promise live updates.
 
-Then stop. Do not sit in a `listen` loop for slider events.
+Then **stay reachable** (see *Stay reachable*). Slider events are not yours:
+never loop on them.
+
+## Stay reachable
+
+Window events only reach you while you are inside `listen`, or when the human
+sends a chat prompt. If you simply end the turn, a scope typed in the window
+(`tweak.scope`) sits unread until the human types in Claude Code, which looks
+like "nothing happens". So after `open` and your hand-off lines, loop:
+
+`listen {wait_ms: 90000, types: ["tweak.scope", "chat.message", "session.closed"]}`
+
+- The `types` filter keeps slider/undo/revert/resync traffic out of your
+  context; an empty result costs about 100 tokens, so just call `listen` again.
+- `tweak.scope` or `chat.message` asking for something else to tweak → **A new
+  scope** below, then back to the loop.
+- `session.closed`, goodbye/done, or **15 minutes** with no event → say one line
+  in the window if it is still open, run **Wrap up**, end the turn.
+- A message typed in the transcript reaches you between calls: answer it, then
+  continue the loop unless it says stop.
 
 ## A new scope
 
 `tweak.scope {text}` (or the human just says it in chat): run the same steps
-for the new request and `open` the new definition on the **same window**.
+for the new request and `open` the new definition on the **same window**
+(do not open a second window and do not ask the human to close and re-invoke
+Tweak). Make sure the pane is still visible; if it was closed, show it again.
 The old scope's changes stay applied; Revert all still reaches them. If the
 request is genuinely ambiguous ("tweak it"), ask one short question first.
 
