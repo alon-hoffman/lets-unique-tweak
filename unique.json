@@ -1,7 +1,7 @@
 {
   "lip": 1,
   "name": "tweak",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "title": "Tweak — an inspector for any codebase",
   "description": "Say what you want to tweak (\"player movement\", \"the scoring\"). Claude finds the values once; you adjust them with sliders, toggles and color pickers, and a small local agent edits your source files with no further AI calls. Undo or revert any time.",
   "entry": "ui/index.html",

@@ -82,3 +82,5 @@ body[data-unique="tweak"] {
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 @media (max-width: 420px) { .tw-row { grid-template-columns: 1fr 22px; } .tw-ctl { grid-column: 1 / -1; grid-row: 2; } }
+.tw-away { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--lets-warn, #e0a93b); border-radius: 8px; font-size: 12px; line-height: 1.4; }
+.tw-away[hidden] { display: none; }

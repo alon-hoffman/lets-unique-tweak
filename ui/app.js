@@ -12,7 +12,7 @@ import { Lets } from '/sdk/lets-client.js';
 import { Shell } from '/sdk/lets-shell.js';
 import { createModel, loadInspector, localChange, applyResult, expirePending, setAgent, agentOnline, createSender, snap, isChanged } from './model.js';
 
-const lets = Lets.connect({ unique: 'tweak', version: '0.1.0', caps: ['entity', 'chat', 'components'] });
+const lets = Lets.connect({ unique: 'tweak', version: '0.1.1', caps: ['entity', 'chat', 'components'] });
 const model = createModel();
 const sentAt = new Map();                       // param id -> when its newest change left the window
 const rows = new Map();                         // param id -> {row, sync()}
@@ -191,9 +191,22 @@ $('scopeForm').addEventListener('submit', (e) => {
   const text = $('scope').value.trim();
   if (!text) return;
   lets.emit('tweak.scope', { text });
-  shell.entity.say({ text: 'Asked Claude. New parameters coming.', mood: 'thinking' });
+  if (shell.listening) {
+    shell.entity.say({ text: 'Asked Claude. New parameters coming.', mood: 'thinking' });
+  } else {
+    // Claude only reads window events while it is listening or when the human sends a prompt.
+    showAway(text);
+    shell.entity.say({ text: 'Claude is away. See the note below.', mood: 'alert' });
+  }
   $('scope').value = '';
 });
+
+function awayText(text) {
+  const ask = text ? `“${text}”` : 'what you want to tweak';
+  return `Claude is not listening right now, so this request waits. To pick it up, send any message in Claude Code, or start a new instance with /lets tweak ${text || '<what to tweak>'} (${ask}).`;
+}
+function showAway(text) { const n = $('away'); n.textContent = awayText(text); n.hidden = false; }
+lets.on('session.listening', (d) => { if (d?.on) $('away').hidden = true; });
 
 // ask the agent (if it is up) for the current inspector: a reload of this window keeps its state
 lets.onStatus((s) => { if (s === 'open') lets.emitNow('tweak.hello', {}); });

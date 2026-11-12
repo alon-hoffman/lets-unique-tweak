@@ -119,8 +119,12 @@ like "nothing happens". So after `open` and your hand-off lines, loop:
   context; an empty result costs about 100 tokens, so just call `listen` again.
 - `tweak.scope` or `chat.message` asking for something else to tweak → **A new
   scope** below, then back to the loop.
-- `session.closed`, goodbye/done, or **15 minutes** with no event → say one line
-  in the window if it is still open, run **Wrap up**, end the turn.
+- `session.closed`, goodbye/done, or **15 minutes** with no event → before you
+  end the turn, if the window is still open, tell the human **in the window**
+  (`say {via:"chat"}`) that you stopped listening and how to continue: send any
+  message in Claude Code, or start a new instance with `/lets tweak <scope>`.
+  Then run **Wrap up** and end the turn. The window also shows this note itself
+  when a scope is submitted while you are away.
 - A message typed in the transcript reaches you between calls: answer it, then
   continue the loop unless it says stop.
 

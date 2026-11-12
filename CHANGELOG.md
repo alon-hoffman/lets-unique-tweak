@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
 - GUIDE: Claude now shows the window itself right after `open` (it used to wait to be asked).
 - GUIDE: Claude stays in a filtered `listen` loop (`tweak.scope`, `chat.message`, `session.closed`) after opening, so a new scope typed
   in the window is picked up without closing and re-invoking Tweak.
+- UI: submitting a scope while Claude is not listening shows a note with how to continue (send a message in Claude Code, or start a new
+  instance with `/lets tweak <scope>`); Claude says the same in the window before it stops listening.
 
 ## 0.1.0
 
