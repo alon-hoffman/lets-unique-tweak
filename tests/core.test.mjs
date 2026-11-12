@@ -426,6 +426,97 @@ test('a distinctive line that now occurs twice is ambiguous, never guessed', asy
   assert.equal(read(root, CFG), before);
 });
 
+// ---- regressions from the independent review ----------------------------------------------------------------
+
+test('review: text is only editable where JS-style escaping is right (never HTML, CSS, YAML)', () => {
+  const root = tmpProject();
+  write(root, 'src/page.html', '<div class="foo">x</div>\n');
+  assert.throws(() => resolveDefinition(def([{ id: 'c', label: 'c', file: 'src/page.html', line: 1, literal: '"foo"' }]), root), (e) => /only editable in JS, TS and JSON/.test(e.message));
+});
+
+test('review: a sign hidden behind a keyword or a space is refused; a hugging binary minus is fine', () => {
+  const root = tmpProject();
+  write(root, 'src/u.js', 'function f() {\n  return -5;\n}\nconst a = 1, b = a-5;\n');
+  write(root, 'src/m.css', '.a { margin: 0 -5px; }\n');
+  assert.throws(() => resolveDefinition(def([{ id: 'x', label: 'x', file: 'src/u.js', line: 2, literal: '5' }]), root), (e) => /unary/.test(e.message));
+  assert.throws(() => resolveDefinition(def([{ id: 'x', label: 'x', file: 'src/m.css', line: 1, literal: '5px' }]), root), (e) => /unary/.test(e.message));
+  assert.doesNotThrow(() => resolveDefinition(def([{ id: 'x', label: 'x', file: 'src/u.js', line: 4, literal: '5', min: -9, max: 9 }]), root));
+});
+
+test('review: a negative value is never glued to a binary minus (a--3)', async () => {
+  const root = tmpProject();
+  write(root, 'src/u.js', 'const a = 1, b = a-5;\n');
+  const s = new TweakSession({ root });
+  s.load(resolveDefinition(def([{ id: 'x', label: 'x', file: 'src/u.js', line: 1, literal: '5', min: -9, max: 9 }]), root));
+  const r = await s.set('x', -3);
+  assert.equal(r.ok, false);
+  assert.equal(read(root, 'src/u.js'), 'const a = 1, b = a-5;\n');
+  assert.equal((await s.set('x', 3)).ok, true);
+});
+
+test('review: files that are not UTF-8 are refused, not rewritten', () => {
+  const root = tmpProject();
+  fs.writeFileSync(path.join(root, 'src/latin.js'), Buffer.from([0x2f, 0x2f, 0x20, 0x63, 0x61, 0x66, 0xe9, 0x0a, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x20, 0x61, 0x3d, 0x35, 0x3b, 0x0a]));
+  assert.throws(() => resolveDefinition(def([{ id: 'x', label: 'x', file: 'src/latin.js', line: 2, literal: '5' }]), root), (e) => /UTF-8/.test(e.message));
+});
+
+test('review: the deny-list is case-insensitive and covers secret-looking names', () => {
+  const root = tmpProject();
+  fs.mkdirSync(path.join(root, 'Node_Modules', 'pkg'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'Node_Modules', 'pkg', 'i.js'), 'export const a = 1;\n');
+  write(root, 'src/secrets.json', '{ "n": 1 }\n');
+  for (const f of ['Node_Modules/pkg/i.js', 'NODE_MODULES/pkg/i.js', 'src/secrets.json', 'SRC/Secrets.JSON']) {
+    assert.throws(() => resolveDefinition(def([{ id: 'x', label: 'x', file: f, line: 1, literal: '1' }]), root), TweakError, f);
+  }
+});
+
+test('review: identical rows: a deleted row above makes the mapping ambiguous instead of editing a neighbour', async () => {
+  const root = tmpProject();
+  const rows = Array.from({ length: 40 }, () => '  { w: 100, h: 20 },').join('\n');
+  write(root, 'src/rows.js', `export const R = [\n${rows}\n];\n`);
+  const s = new TweakSession({ root });
+  s.load(resolveDefinition(def([{ id: 'w', label: 'w', file: 'src/rows.js', line: 20, literal: '100', min: 0, max: 999 }]), root));
+  const lines = read(root, 'src/rows.js').split('\n');
+  lines.splice(2, 1);                                         // a human deletes a row above
+  write(root, 'src/rows.js', lines.join('\n'));
+  const before = read(root, 'src/rows.js');
+  const r = await s.set('w', 150);
+  assert.equal(r.ok, false);
+  assert.equal(read(root, 'src/rows.js'), before);
+});
+
+test('review: the same literal under two scopes keeps its true original for Revert all', async () => {
+  const root = tmpProject();
+  write(root, 'src/g.js', 'const g = 10;\n');
+  const s = new TweakSession({ root });
+  const mk = (scope) => resolveDefinition(def([{ id: 'g', label: 'g', file: 'src/g.js', line: 1, literal: scope === 1 ? '10' : '20', min: 0, max: 5000 }], { scope: `s${scope}` }), root);
+  s.load(mk(1));
+  await s.set('g', 20);
+  s.load(mk(2));
+  await s.set('g', 1000);
+  const r = await s.revertAll();
+  assert.equal(r.ok, true);
+  assert.equal(read(root, 'src/g.js'), 'const g = 10;\n');
+});
+
+test('review: a number that cannot be written exactly is refused, not rounded to zero', async () => {
+  const root = tmpProject();
+  const s = open(root, [p(root, 'g', 'gravity:', '1800', { min: 0, max: 4000 })]);
+  assert.equal((await s.set('g', 1e-7)).ok, false);
+});
+
+test('review: a saved state that points at a different file is not trusted', () => {
+  const root = tmpProject();
+  const stateFile = path.join(root, '..', `evil-${path.basename(root)}.json`);
+  const s = new TweakSession({ root, stateFile });
+  s.load(resolveDefinition(def([p(root, 'g', 'gravity:', '1800', { min: 0, max: 4000 })]), root));
+  const st = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+  st.def.params[0].abs = path.join(root, 'src', 'theme.css');
+  fs.writeFileSync(stateFile, JSON.stringify(st));
+  assert.throws(() => TweakSession.restore(stateFile), (e) => e.code === 'state');
+  fs.rmSync(stateFile);
+});
+
 test('TweakError carries a code', () => {
   assert.equal(new TweakError('x', 'y').code, 'x');
 });

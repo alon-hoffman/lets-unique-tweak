@@ -89,6 +89,7 @@ export function formatValue(spec, current, value) {
       const decimals = Math.min(6, Math.max(spec.decimals ?? 0, current.decimals ?? 0, decimalsOfNumber(value)));
       let text = Number.isInteger(value) && decimals === 0 ? String(value) : trimZeros(value.toFixed(decimals), current.decimals);
       if (/e/i.test(text)) text = value.toFixed(decimals);
+      if (Math.abs(Number(text) - value) > 1e-9 * Math.max(1, Math.abs(value))) throw new TweakError('value', `${value} cannot be written exactly (at most 6 decimals)`);
       return text + (current.unit || '');
     }
     case 'boolean':

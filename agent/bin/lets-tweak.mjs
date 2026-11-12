@@ -71,11 +71,11 @@ async function main() {
 
   if (cmd === 'check') {
     const def = resolveDefinition(readDefinition(path.resolve(pos[1])), project);
-    return out({ ok: true, scope: def.scope, params: def.params.map((p) => ({ id: p.id, source: `${p.file}:${p.line}`, literal: p.mapping.text, control: p.control, unique: p.mapping.before.length > 0 })) });
+    return out({ ok: true, scope: def.scope, params: def.params.map((p) => ({ id: p.id, source: `${p.file}:${p.line}`, literal: p.mapping.text, control: p.control, unique: p.mapping.unique !== false })) });
   }
 
   if (cmd === 'open') {
-    const w = safeId(String(opt.window || ''));
+    const w = safeId(opt.window === true ? '' : String(opt.window || ''));
     const lip = await findHost({ windowId: w, port: opt['host-port'] });
     const def = resolveDefinition(readDefinition(path.resolve(pos[1])), project);
     const file = stateFileFor(w);
@@ -89,7 +89,7 @@ async function main() {
   }
 
   if (cmd === 'status' || cmd === 'revert-all') {
-    const w = safeId(String(opt.window || ''));
+    const w = safeId(opt.window === true ? '' : String(opt.window || ''));
     const session = TweakSession.restore(stateFileFor(w));
     if (cmd === 'revert-all') { const r = await session.revertAll(); return out({ ...r, changed: session.changedCount() }, r.ok ? 0 : 1); }
     return out({ ok: true, scope: session.def?.scope, changed: session.changedCount(), changes: session.allParams().filter((p) => p.currentText !== p.originalText).map((p) => ({ id: p.id, file: p.file, from: p.originalText, to: p.currentText })), stats: session.stats });
@@ -97,6 +97,7 @@ async function main() {
 
   if (cmd === 'serve') {
     const port = Number(opt.port);
+    try { const cur = JSON.parse(fs.readFileSync(agentFile(port), 'utf8')); if (cur.pid !== process.pid && alive(cur.pid)) return; } catch { /* none running */ }   // one agent per host
     const run = runFiles().find((r) => r.port === port);
     if (!run) throw new Error(`no lets host on port ${port}`);
     fs.mkdirSync(TWEAK_HOME, { recursive: true });

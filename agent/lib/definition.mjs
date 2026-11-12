@@ -7,7 +7,8 @@
  * fails here, loudly, instead of at the first slider drag.
  */
 import { parseLiteral, TweakError } from './literal.mjs';
-import { safePath, readSource, resolveHint } from './source.mjs';
+import path from 'node:path';
+import { safePath, readSource, resolveHint, STRING_EXT } from './source.mjs';
 
 export const MAX_PARAMS = 60;
 const ID_RE = /^[a-z][a-zA-Z0-9_-]{0,39}$/;
@@ -49,6 +50,7 @@ export function resolveDefinition(input, root) {
       if (spans.has(key)) throw new TweakError('definition', 'two parameters point at the same literal');
       spans.add(key);
       const parsed = parseLiteral(mapping.text);
+      if (parsed.kind === 'string' && !STRING_EXT.has(path.extname(abs).toLowerCase())) throw new TweakError('definition', 'text values are only editable in JS, TS and JSON files (escaping rules differ elsewhere)');
       params.push(buildParam(p, parsed, mapping, abs));
     } catch (err) {
       if (!(err instanceof TweakError)) throw err;
@@ -96,7 +98,7 @@ function buildParam(p, parsed, mapping, abs) {
   if (control === 'slider' && (spec.min === undefined || spec.max === undefined)) throw new TweakError('definition', 'a slider needs min and max (use control "number" when the range is unknown)');
   return {
     id: p.id, label, group, hint, control, spec, abs, file: p.file.replace(/\\/g, '/'), line: mapping.correctedLine ?? mapping.line,
-    mapping: { start: mapping.start, end: mapping.end, text: mapping.text, before: mapping.before, after: mapping.after, lineBefore: mapping.lineBefore, lineAfter: mapping.lineAfter },
+    mapping: { start: mapping.start, end: mapping.end, text: mapping.text, before: mapping.before, after: mapping.after, lineBefore: mapping.lineBefore, lineAfter: mapping.lineAfter, unique: mapping.unique, fileHash: mapping.fileHash },
     unit: parsed.unit || '', value: parsed.value, originalText: mapping.text, currentText: mapping.text,
   };
 }

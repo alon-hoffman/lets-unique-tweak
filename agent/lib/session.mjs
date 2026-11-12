@@ -52,11 +52,28 @@ export class TweakSession {
 
   /** Activate a resolved definition (see resolveDefinition). The previous scope's parameters are retired, not reverted. */
   load(def) {
+    // a literal that an earlier scope already changed keeps its true original; the earlier entry is dropped so it cannot revert twice
+    const earlier = [...(this.def?.params || []), ...this.retired];
+    const dropped = new Set();
+    for (const p of def.params) {
+      const q = earlier.find((r) => !dropped.has(r) && r.abs === p.abs && r.currentText !== r.originalText && this.sameSpan(r, p));
+      if (q) { p.originalText = q.originalText; dropped.add(q); }
+    }
     if (this.def) this.retired.push(...this.def.params.filter((p) => p.currentText !== p.originalText));
+    this.retired = this.retired.filter((r) => !dropped.has(r));
     this.def = def;
     this.seq++;
     this.persist();
     return this.view();
+  }
+
+  /** Do two mappings (from different scopes) point at the same literal in the file as it is now? */
+  sameSpan(a, b) {
+    try {
+      const content = readSource(a.abs);
+      const loc = locate(content, a.mapping, a.spec.kind);
+      return (loc.status === 'ok' || loc.status === 'moved') && loc.start === b.mapping.start;
+    } catch { return false; }
   }
 
   view() { return this.def ? publicView(this.def, this.seq) : null; }
@@ -158,6 +175,8 @@ export class TweakSession {
         const cur = parseLiteral(loc.text);
         const text = nextText(loc.text, cur);
         if (text === loc.text) { this.stats.skipped++; return { ok: true, id: p.id, value: p.value, text, unchanged: true, changes: [this.change(p)] }; }
+        const before0 = content[loc.start - 1];
+        if ((text[0] === '-' || text[0] === '+') && before0 === text[0]) throw new TweakError('value', `${p.label}: writing ${text} here would form "${before0}${text[0]}" with the code before it`);
         const updated = splice(content, loc.start, loc.end, text);
         this.write(p.abs, updated);
         this.stats.writes++;
@@ -220,7 +239,7 @@ export class TweakSession {
 
   write(abs, content) {
     const tmp = `${abs}.${process.pid}.${crypto.randomBytes(4).toString('hex')}.lets-tweak.tmp`;
-    fs.writeFileSync(tmp, content, 'utf8');
+    try { fs.writeFileSync(tmp, content, 'utf8'); } catch (err) { try { fs.unlinkSync(tmp); } catch { /* none */ } throw err; }
     try { fs.renameSync(tmp, abs); }
     catch (err) {
       // Windows can refuse to rename over a file a dev server is holding open: fall back to an in-place write
@@ -238,7 +257,7 @@ export class TweakSession {
     const state = { root: this.root, seq: this.seq, def: this.def && { ...this.def, params: this.def.params.map(strip) }, retired: this.retired.map(strip), journal: this.journal, stats: this.stats };
     try {
       fs.mkdirSync(path.dirname(this.stateFile), { recursive: true });
-      const tmp = `${this.stateFile}.tmp`;
+      const tmp = `${this.stateFile}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(state));
       fs.renameSync(tmp, this.stateFile);
       this.mtime = fs.statSync(this.stateFile).mtimeMs;
@@ -254,6 +273,7 @@ export class TweakSession {
     s.retired = state.retired || [];
     s.journal = state.journal || [];
     s.stats = { ...s.stats, ...(state.stats || {}) };
+    for (const p of [...(s.def?.params || []), ...s.retired]) if (safePath(s.root, p.file) !== p.abs) throw new TweakError('state', `the saved state for ${p.file} does not match the project; open the inspector again`);
     s.mtime = fs.statSync(stateFile).mtimeMs;
     return s;
   }

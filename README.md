@@ -96,6 +96,10 @@ and open the window URL.
 - **Literals only.** Numbers (with CSS units), booleans, quoted strings and `#hex` colors in JS/TS, CSS/SCSS, JSON, HTML, YAML and a
   few other text formats. No expressions, no computed values, no template placeholders. Editing is text-anchored, not AST-based, on purpose:
   it works across languages and fails closed.
+- **Text values only in JS, TS and JSON** (their escaping rules); in HTML, CSS, YAML and others only numbers, booleans and colors. Files that are not valid UTF-8, and lock, minified, generated, secret-named and build folders, are refused.
+- **Repeated look-alike code** (many identical rows) is edited only while the file is exactly as Tweak last saw it; after an outside edit it reports the value as stale rather than guess which copy you meant.
+- **Opening a new scope while edits are in flight** is last-writer-wins on the small state file under `~/.lets/tweak/`; open scopes between adjustments.
+- **Any unique on the host can send `tweak.*` events**, because lets shares one origin and token across uniques (see SECURITY.md in lets). They can only set validated values on parameters the current inspector already exposes.
 - **Live feedback is your dev server's.** Vite HMR updated the demo game on every change; a project without a watcher needs a refresh or a restart.
   Some edits reset app state. Tweak does not promise live runtime editing.
 - **Working tree only.** Nothing is committed. Undo works while the agent's journal lasts (`~/.lets/tweak/`); git is the long-term undo.
