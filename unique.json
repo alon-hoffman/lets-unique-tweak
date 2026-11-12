@@ -1,0 +1,89 @@
+{
+  "lip": 1,
+  "name": "tweak",
+  "version": "0.1.0",
+  "title": "Tweak — an inspector for any codebase",
+  "description": "Say what you want to tweak (\"player movement\", \"the scoring\"). Claude finds the values once; you adjust them with sliders, toggles and color pickers, and a small local agent edits your source files with no further AI calls. Undo or revert any time.",
+  "entry": "ui/index.html",
+  "guide": "GUIDE.md",
+  "icon": "icon.svg",
+  "engine": ">=0.4.0",
+  "domains": [
+    "tweak"
+  ],
+  "capabilities": [
+    "entity",
+    "chat",
+    "components"
+  ],
+  "events": {
+    "tweak.scope": {
+      "summary": "The human asked to tweak something else: {text}. Claude discovers a new inspector (see GUIDE)."
+    },
+    "tweak.hello": {
+      "summary": "The window connected. Answered by the tweak agent; Claude ignores it.",
+      "quiet": true
+    },
+    "tweak.set": {
+      "summary": "A control changed: {id, value, n}. Applied by the tweak agent with no model call; Claude ignores it.",
+      "quiet": true
+    },
+    "tweak.revert": {
+      "summary": "Reset one parameter to its original value: {id, n}. Handled by the agent.",
+      "quiet": true
+    },
+    "tweak.revertAll": {
+      "summary": "Restore every changed value: {n}. Handled by the agent.",
+      "quiet": true
+    },
+    "tweak.undo": {
+      "summary": "Undo the latest change: {n}. Handled by the agent.",
+      "quiet": true
+    },
+    "tweak.resync": {
+      "summary": "Re-read the values from the files: {n}. Handled by the agent.",
+      "quiet": true
+    }
+  },
+  "commands": {
+    "tweak.inspector": {
+      "summary": "Show an inspector {scope, title, groups, params[{id,label,control,value,min,max,...}]}. Sent by the lets-tweak CLI after it resolved the discovery."
+    },
+    "tweak.result": {
+      "summary": "The agent's answer to a change: {op, id?, n?, ok, value?, changes?, code?, message?, changed, canUndo}."
+    },
+    "tweak.agent": {
+      "summary": "The agent's heartbeat: {online, pid, sets, writes}."
+    }
+  },
+  "permissions": {
+    "fs.write": [],
+    "net": [],
+    "exec": []
+  },
+  "agent": {
+    "$comment": "Not part of the LIP manifest (unknown keys are ignored by the host). This unique has one companion process, agent/bin/lets-tweak.mjs: plain Node 20+, no dependencies, no network except the loopback LIP host. Claude starts it (see GUIDE.md). It is the only thing that writes files, and only the literals named in the inspector Claude discovered, inside the project root the human is working in.",
+    "entry": "agent/bin/lets-tweak.mjs",
+    "node": ">=20",
+    "reads": [
+      "tweak.* events on its own LIP cursor"
+    ],
+    "writes": [
+      "literal values in project source files named by the active inspector",
+      "~/.lets/tweak/ (undo journal, agent log)"
+    ]
+  },
+  "author": {
+    "name": "alon-hoffman",
+    "url": "https://github.com/alon-hoffman"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/alon-hoffman/lets-unique-tweak",
+  "tags": [
+    "inspector",
+    "tuning",
+    "parameters",
+    "developer-tools",
+    "natural-language"
+  ]
+}

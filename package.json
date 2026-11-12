@@ -1,0 +1,15 @@
+{
+  "name": "lets-unique-tweak",
+  "version": "0.1.0",
+  "description": "tweak — a natural-language-driven inspector for any codebase, for lets.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "test": "node --test tests/core.test.mjs tests/model.test.mjs tests/integration.test.mjs",
+    "demo": "node demo/run-demo.mjs"
+  },
+  "repository": { "type": "git", "url": "https://github.com/alon-hoffman/lets-unique-tweak.git" }
+}

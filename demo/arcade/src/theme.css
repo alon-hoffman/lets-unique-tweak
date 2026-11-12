@@ -1,0 +1,10 @@
+:root {
+  --bg: #0f1226;
+  --accent: #ff6bd6;
+  --gap: 16px;
+  --fade: 250ms;
+}
+body { margin: 0; background: var(--bg); color: #fff; font: 16px system-ui, sans-serif; }
+.bar { display: flex; justify-content: space-between; padding: var(--gap); transition: opacity var(--fade); }
+.tag { color: var(--accent); }
+canvas { display: block; margin: 0 auto; background: #181c3a; border-radius: 12px; }

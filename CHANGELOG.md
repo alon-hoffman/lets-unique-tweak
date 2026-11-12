@@ -1,0 +1,7 @@
+# Changelog
+
+## 0.1.0
+
+- First release: a natural-language inspector for existing code. Claude discovers parameters once from a plain-language scope; sliders,
+  toggles, color pickers, text and dropdowns then edit the literals in the source files through a small zero-dependency agent, with no
+  further AI calls. Undo, per-value reset, Revert all, stale and outside-edit detection, coalesced drags, atomic writes.

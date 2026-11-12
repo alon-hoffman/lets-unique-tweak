@@ -1,0 +1,32 @@
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: offensiveadhd/lets
+          path: lets
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node scripts/validate.mjs
+      - run: node lets/engine/bin/lets.mjs validate .
+      - shell: bash
+        run: for f in ui/*.js agent/lib/*.mjs agent/bin/*.mjs demo/*.mjs tests/*.mjs; do node --check "$f"; done
+      - run: npm test
+        env:
+          LETS_REPO: ${{ github.workspace }}/lets
+      - run: node demo/run-demo.mjs
+        env:
+          LETS_REPO: ${{ github.workspace }}/lets

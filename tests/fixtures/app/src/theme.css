@@ -1,0 +1,7 @@
+/* theme */
+:root {
+  --gap: 16px;
+  --fade: 250ms;
+  --bg: #120b1f;
+}
+.nav { padding: 16px; }

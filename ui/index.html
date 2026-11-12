@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tweak — an inspector for any codebase</title>
+  <link rel="stylesheet" href="/sdk/lets-shell.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-unique="tweak">
+  <main class="tw">
+    <header class="tw-head">
+      <div class="tw-title">
+        <h1 id="title">Tweak</h1>
+        <p id="summary" class="tw-summary">Tell Claude what to tweak.</p>
+      </div>
+      <div class="tw-actions">
+        <span id="agent" class="tw-agent" data-state="off" title="The tweak agent applies your changes to the files">agent offline</span>
+        <button type="button" class="lets-btn lets-btn-sm" id="undo" disabled>Undo</button>
+        <button type="button" class="lets-btn lets-btn-sm" id="revertAll" disabled>Revert all</button>
+      </div>
+    </header>
+    <p id="notice" class="tw-notice" role="status" hidden></p>
+    <section id="groups" class="tw-groups" aria-label="Parameters"></section>
+    <div id="empty" class="tw-empty">
+      <p>Nothing to inspect yet.</p>
+      <p class="tw-dim">Say what you want to tweak, in your own words: <em>player movement</em>, <em>the scoring</em>, <em>navigation bar colors</em>. Claude finds the values; you adjust them here.</p>
+    </div>
+    <footer class="tw-foot">
+      <form id="scopeForm" class="tw-scope" autocomplete="off">
+        <input id="scope" type="text" maxlength="200" placeholder="Tweak something else… e.g. “the scoring system”" aria-label="What to tweak" />
+        <button type="submit" class="lets-btn lets-btn-primary lets-btn-sm">Ask Claude</button>
+      </form>
+      <p class="tw-dim tw-fine" id="fine">Changes are written straight to your source files. They are not committed to Git; Undo and Revert all put the old values back.</p>
+    </footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
