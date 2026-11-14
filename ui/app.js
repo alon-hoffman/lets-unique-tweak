@@ -8,6 +8,7 @@
  * never sees or sends a file path. Asking for a different scope is the one
  * thing that goes to Claude (`tweak.scope`).
  */
+import { mountWorkspace } from './workspace.js';
 import { Lets } from '/sdk/lets-client.js';
 import { Shell } from '/sdk/lets-shell.js';
 import { createModel, loadInspector, localChange, applyResult, expirePending, setAgent, agentOnline, createSender, snap, isChanged } from './model.js';
@@ -211,3 +212,7 @@ lets.on('session.listening', (d) => { if (d?.on) $('away').hidden = true; });
 // ask the agent (if it is up) for the current inspector: a reload of this window keeps its state
 lets.onStatus((s) => { if (s === 'open') lets.emitNow('tweak.hello', {}); });
 renderAll();
+
+const workspace = mountWorkspace({ model, change, lets, shell });
+lets.on('tweak.inspector', () => workspace.sync());
+lets.on('tweak.result', () => workspace.sync());

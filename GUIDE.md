@@ -156,3 +156,7 @@ commit or push unasked.
 
 Be conservative and say what you left out. Never read secrets into the
 definition. Keep Doto's lines short, verb first, ending on a dot.
+
+## Project workspace
+
+The inspector’s Workspace button adds demo briefs, acknowledged presets, value comparisons, notes and an agent handoff. Use real app URLs in companion windows; do not substitute mock previews. Presets apply through the existing deterministic source-edit path. A source acknowledgement does not establish that a running instance consumed a constructor-bound value. See workspace/README.md for the real Ink Skater launcher. Non-game suggestions are hypotheses until connected to an actual project.
