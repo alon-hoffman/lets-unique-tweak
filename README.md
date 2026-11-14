@@ -79,6 +79,10 @@ with the real engine: it counts every MCP tool call and watches the `claude` and
 - Refuses `node_modules`, build output, lock files, minified, generated and secret files, absolute and `..` paths, and symlinks that leave the project.
 - Writes are atomic (temp file + rename); one writer per file; identical values are not rewritten; drags are coalesced.
 
+## Project workspace (extension)
+
+Open **Workspace** in the same inspector for real-app launch links, acknowledged presets, source-value comparisons, evaluation notes, and copyable agent handoffs. The original controls and agent edit the actual project. For a ready-to-run connection to the real Ink Skater checkout, see [workspace/README.md](workspace/README.md). Non-game catalog entries are unvalidated briefs until a real project is connected.
+
 ## Develop
 
 ```bash

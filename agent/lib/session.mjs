@@ -76,7 +76,7 @@ export class TweakSession {
     } catch { return false; }
   }
 
-  view() { return this.def ? publicView(this.def, this.seq) : null; }
+  view() { return this.def ? { ...publicView(this.def, this.seq), projectKey: crypto.createHash('sha256').update(this.root).digest('hex').slice(0, 24) } : null; }
 
   param(id) {
     const p = this.def?.params.find((x) => x.id === id);

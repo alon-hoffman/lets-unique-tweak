@@ -114,7 +114,7 @@ function inferControl(kind, spec) {
 /** What the window may see: labels, controls, values. Never a path-resolution detail it could act on. */
 export function publicView(def, seq = 1) {
   return {
-    seq, scope: def.scope, title: def.title, summary: def.summary, groups: def.groups,
+    seq, scope: def.scope, title: def.title, summary: def.summary, groups: def.groups, workspace: def.workspace,
     params: def.params.map((p) => ({
       id: p.id, label: p.label, group: p.group, hint: p.hint, control: p.control, kind: p.spec.kind,
       value: p.value, original: parseLiteral(p.originalText)?.value, unit: p.unit,

@@ -13,7 +13,7 @@ export function createModel() {
 
 /** Load a `tweak.inspector` command. */
 export function loadInspector(m, view) {
-  m.view = { scope: view.scope, title: view.title, summary: view.summary || '', groups: view.groups || [], seq: view.seq };
+  m.view = { scope: view.scope, title: view.title, summary: view.summary || '', groups: view.groups || [], seq: view.seq, projectKey: view.projectKey, workspace: view.workspace };
   m.params = new Map();
   for (const p of view.params || []) m.params.set(p.id, { ...p, status: 'idle', message: '', n: 0 });
   m.changed = view.changed || 0;

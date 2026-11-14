@@ -15,12 +15,14 @@
         <p id="summary" class="tw-summary">Tell Claude what to tweak.</p>
       </div>
       <div class="tw-actions">
+        <button type="button" class="lets-btn lets-btn-sm" id="workspaceToggle" aria-expanded="false">Workspace</button>
         <span id="agent" class="tw-agent" data-state="off" title="The tweak agent applies your changes to the files">agent offline</span>
         <button type="button" class="lets-btn lets-btn-sm" id="undo" disabled>Undo</button>
         <button type="button" class="lets-btn lets-btn-sm" id="revertAll" disabled>Revert all</button>
       </div>
     </header>
     <p id="notice" class="tw-notice" role="status" hidden></p>
+    <section id="workspace" class="tw-workspace" aria-label="Tweak workspace" hidden></section>
     <section id="groups" class="tw-groups" aria-label="Parameters"></section>
     <div id="empty" class="tw-empty">
       <p>Nothing to inspect yet.</p>

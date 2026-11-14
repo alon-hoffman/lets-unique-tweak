@@ -144,6 +144,8 @@ test('open → inspector in the window, many adjustments, no model involved, und
 
 test('the window cannot name files, forge other uniques or reach unknown ids', { skip: !HAVE_LETS && 'lets checkout not found' }, async () => {
   const before = read(project, CFG);
+  const injectedPath = path.resolve(project, '../../etc/passwd');
+  const injectedBefore = fs.existsSync(injectedPath) ? fs.readFileSync(injectedPath) : null;
   /** send one event and wait for its own answer, so each case is judged on its own */
   let n = 1000;
   const ask = async (type, data, from) => {
@@ -164,7 +166,7 @@ test('the window cannot name files, forge other uniques or reach unknown ids', {
   const ok = await ask('tweak.set', { id: 'gravity', value: 5, file: '../../etc/passwd', path: 'x' });
   assert.equal(ok.ok, true);
   assert.equal(read(project, CFG), before.replace('gravity: 1800,', 'gravity: 5,'));
-  assert.ok(!fs.existsSync(path.resolve(project, '..', '..', 'etc')));
+  assert.deepEqual(fs.existsSync(injectedPath) ? fs.readFileSync(injectedPath) : null, injectedBefore, 'the injected path is untouched, even if it already exists');
   // a window of another unique cannot drive the agent
   const impostor = await fakeWindow(engine.host, 'wimpostor', 'graph');
   await impostor.emit('tweak.set', { id: 'gravity', value: 7 });
